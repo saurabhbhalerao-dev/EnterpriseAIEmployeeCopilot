@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Solution Items/" />
+  <Project Path="EnterpriseAIEmployeeCopilot.Application/EnterpriseAIEmployeeCopilot.Application.csproj" />
+  <Project Path="EnterpriseAIEmployeeCopilot.Domain/EnterpriseAIEmployeeCopilot.Domain.csproj" />
+  <Project Path="EnterpriseAIEmployeeCopilot.Infrastructure/EnterpriseAIEmployeeCopilot.Infrastructure.csproj" />
+  <Project Path="EnterpriseAIEmployeeCopilot.Shared/EnterpriseAIEmployeeCopilot.Shared.csproj" />
+  <Project Path="EnterpriseAIEmployeeCopilot/EnterpriseAIEmployeeCopilot.API.csproj" />
+</Solution>
