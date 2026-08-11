@@ -22,5 +22,14 @@ namespace EnterpriseAIEmployeeCopilot.API.Controllers
 
             return Ok(result);
         }
+
+        [HttpPost("refresh")]
+        public async Task<ActionResult<LoginResponseDto>> Refresh(
+           RefreshTokenRequestDto request)
+        {
+            var result = await _authService.RefreshTokenAsync(request);
+
+            return Ok(result);
+        }
     }
 }

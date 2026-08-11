@@ -35,7 +35,6 @@ namespace EnterpriseAIEmployeeCopilot.Application.Services
 
             var response = _jwtTokenService.GenerateToken(employee);
 
-            // Save refresh token in database
             var refreshToken = new RefreshToken
             {
                 EmployeeId = employee.Id,
@@ -45,6 +44,49 @@ namespace EnterpriseAIEmployeeCopilot.Application.Services
             };
 
             await _unitOfWork.RefreshTokens.AddAsync(refreshToken);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return response;
+        }
+
+        public async Task<LoginResponseDto> RefreshTokenAsync(
+            RefreshTokenRequestDto dto)
+        {
+            var refreshTokens = await _unitOfWork.RefreshTokens
+                .FindAsync(x =>
+                    x.Token == dto.RefreshToken &&
+                    !x.IsRevoked);
+
+            var refreshToken = refreshTokens.FirstOrDefault();
+
+            if (refreshToken == null)
+                throw new Exception("Invalid refresh token.");
+
+            if (refreshToken.ExpiryDate <= DateTime.UtcNow)
+                throw new Exception("Refresh token has expired.");
+
+            var employee = await _unitOfWork.Employees
+                .GetByIdAsync(refreshToken.EmployeeId);
+
+            if (employee == null)
+                throw new Exception("Employee not found.");
+
+            var response = _jwtTokenService.GenerateToken(employee);
+
+            // Revoke old refresh token
+            refreshToken.IsRevoked = true;
+
+            // Store new refresh token
+            var newRefreshToken = new RefreshToken
+            {
+                EmployeeId = employee.Id,
+                Token = response.RefreshToken,
+                ExpiryDate = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false
+            };
+
+            await _unitOfWork.RefreshTokens.AddAsync(newRefreshToken);
 
             await _unitOfWork.SaveChangesAsync();
 
