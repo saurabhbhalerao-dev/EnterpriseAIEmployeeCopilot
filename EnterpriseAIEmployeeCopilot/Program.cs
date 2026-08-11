@@ -3,18 +3,44 @@ using EnterpriseAIEmployeeCopilot.Application;
 using EnterpriseAIEmployeeCopilot.Infrastructure.Configurations;
 using EnterpriseAIEmployeeCopilot.Infrastructure.Data;
 using EnterpriseAIEmployeeCopilot.Infrastructure.Data.Seed;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 #region Services
 
-// Add Controllers
+// Controllers
 builder.Services.AddControllers();
 
-// Swagger
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// JWT Configuration
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection(JwtSettings.SectionName));
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwtSettings = builder.Configuration
+            .GetSection(JwtSettings.SectionName)
+            .Get<JwtSettings>();
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            ValidIssuer = jwtSettings!.Issuer,
+            ValidAudience = jwtSettings.Audience,
+
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtSettings.Key))
+        };
+    });
 
 // Application Layer
 builder.Services.AddApplication();
@@ -26,25 +52,32 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-#region Seed Master Data
+#region Database Migration & Seed
 
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-
     try
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
+        var context = scope.ServiceProvider
+            .GetRequiredService<ApplicationDbContext>();
 
-        // Ensure database exists
         await context.Database.MigrateAsync();
 
-        // Seed Master Data
         await MasterDataSeeder.SeedAsync(context);
+
+        Console.WriteLine("========================================");
+        Console.WriteLine("Database Migration Completed.");
+        Console.WriteLine("Master Data Seed Completed.");
+        Console.WriteLine("========================================");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Database Seeding Error: {ex.Message}");
+        Console.WriteLine("========================================");
+        Console.WriteLine("DATABASE INITIALIZATION FAILED");
+        Console.WriteLine(ex);
+        Console.WriteLine("========================================");
+
+        throw;
     }
 }
 
@@ -52,15 +85,11 @@ using (var scope = app.Services.CreateScope())
 
 #region Middleware
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
 app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

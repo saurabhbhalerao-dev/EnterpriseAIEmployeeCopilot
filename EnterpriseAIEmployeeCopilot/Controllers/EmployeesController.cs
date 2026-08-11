@@ -1,17 +1,20 @@
 ﻿using EnterpriseAIEmployeeCopilot.Application.DTOs.Employee;
 using EnterpriseAIEmployeeCopilot.Application.Interfaces.Services;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace EnterpriseAIEmployeeCopilot.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class EmployeesController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;
 
-        public EmployeesController(IEmployeeService employeeService) 
+        public EmployeesController(IEmployeeService employeeService)
         {
             _employeeService = employeeService;
         }
@@ -25,6 +28,25 @@ namespace EnterpriseAIEmployeeCopilot.API.Controllers
             return Ok(employees);
         }
 
+        // GET: api/employees/me
+        [HttpGet("me")]
+        public async Task<ActionResult<EmployeeDetailsDto>> GetMyProfile()
+        {
+            var userIdClaim =
+                User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdClaim, out var employeeId))
+            {
+                return Unauthorized("Invalid employee identity in token.");
+            }
+
+            var employee =
+                await _employeeService.GetByIdAsync(employeeId);
+
+            return Ok(employee);
+        }
+
         // GET: api/employees/5
         [HttpGet("{id:int}")]
         public async Task<ActionResult<EmployeeDetailsDto>> GetById(int id)
@@ -36,7 +58,9 @@ namespace EnterpriseAIEmployeeCopilot.API.Controllers
 
         // POST: api/employees
         [HttpPost]
-        public async Task<ActionResult<int>> Create([FromBody] CreateEmployeeDto dto)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<int>> Create(
+            [FromBody] CreateEmployeeDto dto)
         {
             var id = await _employeeService.CreateAsync(dto);
 
@@ -48,6 +72,7 @@ namespace EnterpriseAIEmployeeCopilot.API.Controllers
 
         // PUT: api/employees/5
         [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(
             int id,
             [FromBody] UpdateEmployeeDto dto)
@@ -59,6 +84,7 @@ namespace EnterpriseAIEmployeeCopilot.API.Controllers
 
         // DELETE: api/employees/5
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             await _employeeService.DeleteAsync(id);

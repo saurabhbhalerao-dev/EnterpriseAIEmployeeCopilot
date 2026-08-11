@@ -47,7 +47,7 @@ namespace EnterpriseAIEmployeeCopilot.Application.Services
             var employee = _mapper.Map<Employee>(dto);
 
             // Temporary until Identity/JWT is implemented
-            employee.PasswordHash = dto.Password;
+            employee.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
             await _unitOfWork.Employees.AddAsync(employee);
 

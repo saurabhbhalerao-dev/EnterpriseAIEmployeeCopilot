@@ -19,6 +19,7 @@ namespace EnterpriseAIEmployeeCopilot.Application
 
             // Services
             services.AddScoped<IEmployeeService, EmployeeService>();
+            services.AddScoped<IAuthService, AuthService>();
 
             return services;
         }
