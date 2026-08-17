@@ -8,5 +8,8 @@ namespace EnterpriseAIEmployeeCopilot.Application.Interfaces.Services
 
         Task<LoginResponseDto> RefreshTokenAsync(
            RefreshTokenRequestDto dto);
+
+        Task LogoutAsync(
+            RefreshTokenRequestDto dto);
     }
 }

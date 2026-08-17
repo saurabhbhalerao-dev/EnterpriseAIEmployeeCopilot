@@ -92,5 +92,23 @@ namespace EnterpriseAIEmployeeCopilot.Application.Services
 
             return response;
         }
+
+        public async Task LogoutAsync(
+    RefreshTokenRequestDto dto)
+        {
+            var refreshTokens = await _unitOfWork.RefreshTokens
+                .FindAsync(x =>
+                    x.Token == dto.RefreshToken &&
+                    !x.IsRevoked);
+
+            var refreshToken = refreshTokens.FirstOrDefault();
+
+            if (refreshToken == null)
+                throw new Exception("Invalid or already revoked refresh token.");
+
+            refreshToken.IsRevoked = true;
+
+            await _unitOfWork.SaveChangesAsync();
+        }
     }
 }

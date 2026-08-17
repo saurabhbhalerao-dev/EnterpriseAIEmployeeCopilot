@@ -31,5 +31,17 @@ namespace EnterpriseAIEmployeeCopilot.API.Controllers
 
             return Ok(result);
         }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout(
+    [FromBody] RefreshTokenRequestDto request)
+        {
+            await _authService.LogoutAsync(request);
+
+            return Ok(new
+            {
+                Message = "Logout successful."
+            });
+        }
     }
 }
