@@ -8,12 +8,12 @@ namespace EnterpriseAIEmployeeCopilot.Infrastructure.Repositories
     public class EmployeeRepository
         : Repository<Employee>, IEmployeeRepository
     {
-        private readonly ApplicationDbContext _context;
+        //private readonly ApplicationDbContext _context;
 
         public EmployeeRepository(ApplicationDbContext context)
             : base(context)
         {
-            _context = context;
+            //_context = context;
         }
 
         public async Task<Employee?> GetByEmailAsync(string email)
